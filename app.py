@@ -13,7 +13,7 @@ def con():
 with con() as c:
     c.execute("""CREATE TABLE IF NOT EXISTS users(
         id INTEGER PRIMARY KEY, nome TEXT, saldo INTEGER DEFAULT 0,
-        tap INTEGER DEFAULT 1, nivel INTEGER DEFAULT 1)""")
+        energia INTEGER DEFAULT 1000, tap INTEGER DEFAULT 1, nivel INTEGER DEFAULT 1)""")
 
 def valida(init_data):
     if not init_data:
@@ -57,8 +57,8 @@ const tg = Telegram.WebApp; tg.ready(); tg.expand();
 const H = {Authorization: "tma " + tg.initData, "Content-Type": "application/json"};
 async function me(){const r=await fetch("/api/me",{headers:H});const d=await r.json();
   document.getElementById("s").textContent=d.saldo;}
-async function tap(){await fetch("/api/tap",{method:"POST",headers:H,
-  body:JSON.stringify({count:1})});me();}
+async function tap(){const r=await fetch("/api/tap",{method:"POST",headers:H,
+  body:JSON.stringify({count:1})});const d=await r.json();me();}
 async function boost(){await fetch("/api/boost",{method:"POST",headers:H});me();}
 me();
 </script></body></html>"""
@@ -101,17 +101,6 @@ def boost():
         c.execute("UPDATE users SET saldo=saldo-?, nivel=nivel+1, tap=tap+1 WHERE id=?",
                   (custo, uid))
     return jsonify(ok=True, nivel=r["nivel"] + 1)
-
-@app.route("/api/ranking")
-def ranking():
-    with con() as c:
-        rs = c.execute("SELECT id,nome,saldo,nivel FROM users ORDER BY saldo DESC LIMIT 20").fetchall()
-    return jsonify([dict(r) for r in rs])
-
-@app.route("/api/debug")
-def debug():
-    return jsonify(tem_token=bool(BOT_TOKEN), tamanho=len(BOT_TOKEN),
-                   inicio=BOT_TOKEN[:10], fim=BOT_TOKEN[-4:])
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
